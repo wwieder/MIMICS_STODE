@@ -59,9 +59,7 @@ densDep <<- 1 #0.2
 for (x in 1:5)  {   # loop over exudation experiments
   data = read.csv("LTER_SITE_1.csv")
   df <- data[6,] #6=HAR, #14=LUQ
-  exudLoc <- x
-  exud    <- 0.1  #10% metabolic litter to exudates
-  
+
   Site = df$Site
   ANPP = df$ANPP/2 
   TSOI = df$MAT
@@ -292,33 +290,6 @@ colnames(df) <- c("ex2soma", "ex2litm")
 
 test[[1]]
 attributes(test)
-
-
-##############################
-# ODE SOLVER
-##############################
- 
-# end = 3e6
-# step = 1e2
-# time_steps = seq(1,end,step)
-# n_steps = length(time_steps)
-# 
-# start_time <- Sys.time()
-# 
-# t_sol_ss = ode(
-#   y = Ty,
-#   times = time_steps,
-#   func = CN_RXEQ,
-#   parms = c(),
-#   method = "ode45",
-#   maxsteps = 1000000)
-# 
-# print(paste0("Task time: ", Sys.time() - start_time))
-# gc()
-# 
-# sol <- as.data.frame(t_sol_ss)
-# 
-# ggplot(sol, aes(x=time, y=SOM_1)) + geom_point() + geom_line()
 
 
 ########################################
