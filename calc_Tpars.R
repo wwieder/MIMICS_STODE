@@ -4,27 +4,22 @@
 # Load MIMICS parameters
 source("set_MIMICS_params.R")
 
-calc_Tpars <- function(TSOI, ANPP, CLAY, CN, LIG) {
-  
-  #debug
-  # TSOI = 7
-  # ANPP = 500
-  # CLAY = 40
-  # CN = 25
-  # LIG = 15
+calc_Tpars <- function(TSOI, ANPP, CLAY, CN, LIG, x, exud) {
   
   ANPP        <- ANPP/2
   fCLAY       <- CLAY/100
   lig_N = (LIG/100)/(1/(CN/2.5))
   fMET <- fmet_p[1] * (fmet_p[2] - fmet_p[3] * lig_N) 
   CN_s        <<- (CN-CN_m*fMET)/(1-fMET)
+  CN_r = CN_r  * sqrt(cnModNum/fMET)
+  CN_K = CN_K * sqrt(cnModNum/fMET)
   
   
   # Calc litter input rate
   EST_LIT <- (ANPP / (365*24)) * 1e3 / 1e4
   #print(EST_LIT)# gC/m2/h (from gC/m2/y) then mgC/cm2/h(from gC/m2/h) 
   
-  # ------------ caclulate parameters ---------------
+  # ------------ calculate time varying parameters ---------------
   Vmax     <- exp(TSOI * Vslope + Vint) * aV 
   Km       <- exp(TSOI * Kslope + Kint) * aK
   
@@ -58,7 +53,27 @@ calc_Tpars <- function(TSOI, ANPP, CLAY, CN, LIG) {
   
   VMAX     <- Vmax * v_MOD 
   KM       <- Km / k_MOD
+    
+  # Inputs now include root exudates
+  I       <- array(NA, dim=3)             
+  I[1]    <- (EST_LIT / depth) * fMET     
+  I[2]    <- (EST_LIT / depth) * (1-fMET)
+  I[3]    <- 0  
+  if (x >= 2) {  # Priming exud to SOMa, no change in inputs
+    I[3] = I[1] * exud
+    I[1] = I[1] - I[3]
+  } 
+  if (x == 3) {   #Priming + Mining10% increase on desorbtion.
+    desorb = desorb * (1+exud)
+  }
+
+  Inputs <- I
+  # initialize pools with small values
+  lit     <- array(I[1], dim=2)      
+  mic     <- array(I[1], dim=2)   
+  som     <- array(I[1], 3) 
   
+
   LITmin  <- rep(NA, dim=4)
   MICtrn  <- c(NA,NA,NA,NA,NA,NA)
   SOMmin  <- rep(NA, dim=2)
@@ -80,7 +95,7 @@ calc_Tpars <- function(TSOI, ANPP, CLAY, CN, LIG) {
   upMIC_2   <<-  array(NA, dim=1)
   upMIC_2_N <<-  array(NA, dim=1)
   
-  Tpars <- c( Inputs = I, VMAX = VMAX, KM = KM, CUE = CUE, 
+  Tpars <- list( Inputs = I, VMAX = VMAX, KM = KM, CUE = CUE, 
                fPHYS = fPHYS, fCHEM = fCHEM, fAVAI = fAVAI, FI = FI, 
                tau = tau, LITmin = LITmin, SOMmin = SOMmin, MICtrn = MICtrn, 
                desorb = desorb, DEsorb = DEsorb, OXIDAT = OXIDAT, KO = KO,
@@ -96,8 +111,8 @@ calc_Tpars <- function(TSOI, ANPP, CLAY, CN, LIG) {
 }
 
 #e.g.
-t1 = calc_Tpars(TSOI = 7, ANPP = 500, CLAY = 40, CN =20, LIG = 15)
-t2 = calc_Tpars(TSOI = 8, ANPP = 500, CLAY = 40, CN =20, LIG = 15)
+#t1 = calc_Tpars(TSOI = 7, ANPP = 500, CLAY = 40, CN =20, LIG = 15,x=1)
+#t2 = calc_Tpars(TSOI = 8, ANPP = 500, CLAY = 40, CN =20, LIG = 15,x=1)
 
-t1['VMAX1']
-t2['VMAX1']
+#t1['VMAX1']
+#t2['VMAX1']
