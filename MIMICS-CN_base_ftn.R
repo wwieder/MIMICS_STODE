@@ -107,6 +107,16 @@ test3[[1]][15]
 (test1[[1]][3]/test1[[1]][4])
 (test2[[1]][3]/test2[[1]][4])
 
+# bulk C:N
+round(sum(test1[[1]][1:7])/sum(test1[[1]][8:14]),1)
+round(sum(test2[[1]][1:7])/sum(test2[[1]][8:14]),1)
+round(sum(test3[[1]][1:7])/sum(test3[[1]][8:14]),1)
+
+#total N
+sum(test1[[1]][8:15])
+sum(test2[[1]][8:15])
+sum(test3[[1]][8:15])
+
 # MIC : TOTAL
 sum(test1[[1]][3:4])/sum(test1[[1]][1:7])
 sum(test2[[1]][3:4])/sum(test2[[1]][1:7])
@@ -134,8 +144,11 @@ df_ss%>%
   filter(as.numeric(pools) <= 7) %>%
   ggplot(aes(experiment, y, fill = pools)) +
   geom_col() +
-  labs(y = "Total C stocks (kgC/m2)")#,
-#       title = paste("Exudation,",Site))
+  labs(y = "Total C stocks (kgC/m2)") +
+  geom_text(x=1, y=1, label=paste("CN =",round(sum(test1[[1]][1:7])/sum(test1[[1]][8:14]),1))) +
+  geom_text(x=2, y=1, label=paste("CN =",round(sum(test2[[1]][1:7])/sum(test2[[1]][8:14]),1))) +
+  geom_text(x=3, y=1, label=paste("CN =",round(sum(test3[[1]][1:7])/sum(test3[[1]][8:14]),1))) 
+
 
 df_ss %>%
   filter(as.numeric(pools) <= 7) %>%
@@ -208,7 +221,7 @@ for (z in seq(1,length(experiment))) {
     #---------------------------------------------
     # e.g. 20% increase in NPP, starting in year 1
     exud_adj = 0.1 
-    if (i < (365) ) {
+    if (i < (1*365) ) {
       ANPP_adj = ANPP 
       CN_adj = CN 
     } else {
@@ -294,4 +307,7 @@ df_out %>%
 #exef_acid = 1e3*365*(4.227151e-05 - 4.170081e-05)  * 1e4 *1e-3
 #exef_acid
 #exef_prime
+
+# Nmin (kg/m2/d -> mgC/cm3/d (0-30 cm) -> ug/cm3/h)
+4.167958e-05 / MICROtoECO * 1e3/24
 

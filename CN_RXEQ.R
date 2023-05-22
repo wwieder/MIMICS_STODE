@@ -21,7 +21,7 @@ CN_RXEQ <- function(t, y, pars) {
     MICtrn[6] = MIC_2^densDep * tau[2] * fAVAI[2]     
     SOMmin[2] = MIC_2 * VMAX[6] * SOM_3 / (KM[6] + MIC_2)
     
-    DEsorp    = SOM_1 * desorp
+    DEsorb    = SOM_1 * desorb
     
     OXIDAT    = ((MIC_1 * VMAX[2] * SOM_2 / (KO[1]*KM[2] + MIC_1)) +
                  (MIC_2 * VMAX[5] * SOM_2 / (KO[2]*KM[5] + MIC_2)))
@@ -31,7 +31,7 @@ CN_RXEQ <- function(t, y, pars) {
     LITmin = LITmin*24
     MICtrn = MICtrn*24
     SOMmin = SOMmin*24
-    DEsorp = DEsorp*24
+    DEsorb = DEsorb*24
     OXIDAT = OXIDAT*24
     
     upMIC_1    = CUE[1]*(LITmin[1] + SOMmin[1]) + CUE[2]*(LITmin[2])
@@ -39,13 +39,13 @@ CN_RXEQ <- function(t, y, pars) {
     
     dLIT_1 = Inputs[1]*(1-FI[1]) - LITmin[1] - LITmin[3]
     dMIC_1 = upMIC_1 - (MICtrn[[1]] + MICtrn[[2]] + MICtrn[[3]])# - Overflow[1]    
-    dSOM_1 = Inputs[1]*FI[1] + MICtrn[1] + MICtrn[4] - DEsorp     
+    dSOM_1 = Inputs[1]*FI[1] + MICtrn[1] + MICtrn[4] - DEsorb     
     
     dLIT_2 = Inputs[2]*(1-FI[2]) - LITmin[2] - LITmin[4]
     dMIC_2 = upMIC_2 - (MICtrn[[4]] + MICtrn[[5]] + MICtrn[[6]])# - Overflow[2]    
     dSOM_2 = Inputs[2]*FI[2] + MICtrn[2] + MICtrn[5] - OXIDAT
     # Now include optional root exudation input to SOMa    
-    dSOM_3 = Inputs[3] + MICtrn[3] + MICtrn[6] + DEsorp + OXIDAT - SOMmin[1] - SOMmin[2]
+    dSOM_3 = Inputs[3] + MICtrn[3] + MICtrn[6] + DEsorb + OXIDAT - SOMmin[1] - SOMmin[2]
 
     #------ N cycle ---------
     MICr_recip = 1.0 / (MIC_1 + 1e-10)
@@ -64,7 +64,7 @@ CN_RXEQ <- function(t, y, pars) {
     MICtrnN[6] =  MICtrn[6] * MIC_2_N * MICk_recip
     SOMminN[2] =  SOMmin[2]*(SOM_3_N/(SOM_3 + 1e-10))
   
-    DEsorpN    =  DEsorp[1]*(SOM_1_N/(SOM_1 + 1e-10))
+    DEsorbN    =  DEsorb[1]*(SOM_1_N/(SOM_1 + 1e-10))
     OXIDATN    =  OXIDAT[1] * (SOM_2_N/(SOM_2 + 1e-10))
 
   #! Partitions available DIN between microbial pools based on relative biomass
@@ -95,13 +95,13 @@ CN_RXEQ <- function(t, y, pars) {
   
     dLIT_1_N = Inputs[1]*(1-FI[1])/CN_m - LITminN[1] - LITminN[3]
     dMIC_1_N = upMIC_1_N - (MICtrnN[[1]] + MICtrnN[[2]] + MICtrnN[[3]]) - Nspill[1]
-    dSOM_1_N = Inputs[1]*FI[1]/CN_m + MICtrnN[1] + MICtrnN[4] - DEsorpN #!!! Dividing by CN-m is not in fortran code. Possibly using different N input? ("NlitInput")
+    dSOM_1_N = Inputs[1]*FI[1]/CN_m + MICtrnN[1] + MICtrnN[4] - DEsorbN #!!! Dividing by CN-m is not in fortran code. Possibly using different N input? ("NlitInput")
   
     dLIT_2_N = Inputs[2]*(1-FI[2])/CN_s - LITminN[2] - LITminN[4]
     dMIC_2_N = upMIC_2_N - (MICtrnN[[4]] + MICtrnN[[5]] + MICtrnN[[6]]) - Nspill[2]
     dSOM_2_N = Inputs[2]*FI[2]/CN_s + MICtrnN[2] + MICtrnN[5] - OXIDATN
     # Now include optional root exudation input to SOMa    
-    dSOM_3_N = Inputs[3]/CN_m + MICtrnN[3] + MICtrnN[6] + DEsorpN + OXIDATN - SOMminN[1] - SOMminN[2]
+    dSOM_3_N = Inputs[3]/CN_m + MICtrnN[3] + MICtrnN[6] + DEsorbN + OXIDATN - SOMminN[1] - SOMminN[2]
 
     #!!! CHECK AGAINST TESTBED CODE, THIS IS WRONG...?
     # dDIN = (1-NUE[1])*(LITminN[1] + SOMminN[1]) + (1-NUE[2])*(LITminN[2]) +
@@ -142,7 +142,7 @@ CN_iter <- function(t, y, pars) {
     MICtrn[6] = MIC_2^densDep * tau[2] * fAVAI[2]     
     SOMmin[2] = MIC_2 * VMAX[6] * SOM_3 / (KM[6] + MIC_2)
     
-    DEsorp    = SOM_1 * desorp
+    DEsorb    = SOM_1 * desorb
     
     OXIDAT    = ((MIC_1 * VMAX[2] * SOM_2 / (KO[1]*KM[2] + MIC_1)) +
                    (MIC_2 * VMAX[5] * SOM_2 / (KO[2]*KM[5] + MIC_2)))
@@ -152,7 +152,7 @@ CN_iter <- function(t, y, pars) {
     LITmin = LITmin*24
     MICtrn = MICtrn*24
     SOMmin = SOMmin*24
-    DEsorp = DEsorp*24
+    DEsorb = DEsorb*24
     OXIDAT = OXIDAT*24
     
     upMIC_1    = CUE[1]*(LITmin[1] + SOMmin[1]) + CUE[2]*(LITmin[2])
@@ -160,13 +160,13 @@ CN_iter <- function(t, y, pars) {
     
     dLIT_1 = Inputs[1]*(1-FI[1]) - LITmin[1] - LITmin[3]
     dMIC_1 = upMIC_1 - (MICtrn[[1]] + MICtrn[[2]] + MICtrn[[3]])# - Overflow[1]    
-    dSOM_1 = Inputs[1]*FI[1] + MICtrn[1] + MICtrn[4] - DEsorp     
+    dSOM_1 = Inputs[1]*FI[1] + MICtrn[1] + MICtrn[4] - DEsorb     
     
     dLIT_2 = Inputs[2]*(1-FI[2]) - LITmin[2] - LITmin[4]
     dMIC_2 = upMIC_2 - (MICtrn[[4]] + MICtrn[[5]] + MICtrn[[6]])# - Overflow[2]    
     dSOM_2 = Inputs[2]*FI[2] + MICtrn[2] + MICtrn[5] - OXIDAT
     # Now include optional root exudation input to SOMa    
-    dSOM_3 = Inputs[3] + MICtrn[3] + MICtrn[6] + DEsorp + OXIDAT - SOMmin[1] - SOMmin[2]
+    dSOM_3 = Inputs[3] + MICtrn[3] + MICtrn[6] + DEsorb + OXIDAT - SOMmin[1] - SOMmin[2]
     
     #------ N cycle ---------
     MICr_recip = 1.0 / (MIC_1 + 1e-10)
@@ -185,7 +185,7 @@ CN_iter <- function(t, y, pars) {
     MICtrnN[6] =  MICtrn[6] * MIC_2_N * MICk_recip
     SOMminN[2] =  SOMmin[2]*(SOM_3_N/(SOM_3 + 1e-10))
     
-    DEsorpN    =  DEsorp[1]*(SOM_1_N/(SOM_1 + 1e-10))
+    DEsorbN    =  DEsorb[1]*(SOM_1_N/(SOM_1 + 1e-10))
     OXIDATN    =  OXIDAT[1] * (SOM_2_N/(SOM_2 + 1e-10))
     
     #! Partitions available DIN between microbial pools based on relative biomass
@@ -216,13 +216,13 @@ CN_iter <- function(t, y, pars) {
     
     dLIT_1_N = Inputs[1]*(1-FI[1])/CN_m - LITminN[1] - LITminN[3]
     dMIC_1_N = upMIC_1_N - (MICtrnN[[1]] + MICtrnN[[2]] + MICtrnN[[3]]) - Nspill[1]
-    dSOM_1_N = Inputs[1]*FI[1]/CN_m + MICtrnN[1] + MICtrnN[4] - DEsorpN #!!! Dividing by CN-m is not in fortran code. Possibly using different N input? ("NlitInput")
+    dSOM_1_N = Inputs[1]*FI[1]/CN_m + MICtrnN[1] + MICtrnN[4] - DEsorbN #!!! Dividing by CN-m is not in fortran code. Possibly using different N input? ("NlitInput")
     
     dLIT_2_N = Inputs[2]*(1-FI[2])/CN_s - LITminN[2] - LITminN[4]
     dMIC_2_N = upMIC_2_N - (MICtrnN[[4]] + MICtrnN[[5]] + MICtrnN[[6]]) - Nspill[2]
     dSOM_2_N = Inputs[2]*FI[2]/CN_s + MICtrnN[2] + MICtrnN[5] - OXIDATN
     # Now include optional root exudation input to SOMa    
-    dSOM_3_N = Inputs[3]/CN_m + MICtrnN[3] + MICtrnN[6] + DEsorpN + OXIDATN - SOMminN[1] - SOMminN[2]
+    dSOM_3_N = Inputs[3]/CN_m + MICtrnN[3] + MICtrnN[6] + DEsorbN + OXIDATN - SOMminN[1] - SOMminN[2]
     
     #!!! CHECK AGAINST TESTBED CODE, THIS IS WRONG...?
     # dDIN = (1-NUE[1])*(LITminN[1] + SOMminN[1]) + (1-NUE[2])*(LITminN[2]) +
