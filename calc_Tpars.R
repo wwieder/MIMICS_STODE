@@ -4,7 +4,7 @@
 # Load MIMICS parameters
 source("set_MIMICS_params.R")
 
-calc_Tpars <- function(TSOI, ANPP, CLAY, CN, LIG, x, exud) {
+calc_Tpars <- function(TSOI, ANPP, CLAY, CN, LIG, x, exud,nUPmod=1) {
   
   ANPP        <- ANPP/2
   fCLAY       <- CLAY/100
@@ -94,6 +94,8 @@ calc_Tpars <- function(TSOI, ANPP, CLAY, CN, LIG, x, exud) {
   upMIC_1_N <<-  array(NA, dim=1)
   upMIC_2   <<-  array(NA, dim=1)
   upMIC_2_N <<-  array(NA, dim=1)
+  
+  Nleak = Nleak * nUPmod
   
   Tpars <- list( Inputs = I, VMAX = VMAX, KM = KM, CUE = CUE, 
                fPHYS = fPHYS, fCHEM = fCHEM, fAVAI = fAVAI, FI = FI, 

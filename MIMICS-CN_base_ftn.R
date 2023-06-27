@@ -39,7 +39,7 @@ for (x in 1:3)  {   # loop over exudation experiments
   
   
   Tpars = calc_Tpars(TSOI = TSOI, ANPP = ANPP, CLAY = CLAY, CN =CN, LIG = LIG,
-                     x=x,exud=exud) #>> Same example site input as used for stode
+                     x=x,exud=exud,nUPmod=1) #>> Same example site input as used for stode
   
   
   #----------initialize pools---------------
@@ -102,7 +102,7 @@ for (x in 1:3)  {   # loop over exudation experiments
 
 test1[[1]][15]
 test3[[1]][15]
-
+test3
 # MIC r:K
 (test1[[1]][3]/test1[[1]][4])
 (test2[[1]][3]/test2[[1]][4])
@@ -188,13 +188,18 @@ df_ss %>%
 # SS forward
 #######################################
 ########################################
-experiment = c('eCO2_control',
+
+experiment = c('eCO2_baseline',
                'eCO2_prime','eCO2_prime_rootExud',
                'eCO2_prime_acid','eCO2_prime_acid_rootExud')
-tx = c('control','prime','prime','prime+acid','prime+acid')
-alloc = c('10%','10%','15%','10%','15%')
-sim_year = 50 # Set number of days to sim forward
+tx = c('baseline','prime','prime','prime+acid','prime+acid')
+alloc = c('10%','10%','20%','10%','20%')
+sim_year = 11 # Set number of days to sim forward
 sim_days = 365*sim_year
+exud = c(0.1,0.2)
+eCO2_NPP = 1.1
+eCO2_CHEM = 1.2
+nUPmod = 1
 
 for (z in seq(1,length(experiment))) {
   # Grab steady state pools from stode output above
@@ -211,6 +216,7 @@ for (z in seq(1,length(experiment))) {
   print(x_adj)
   # Create dataframe to store MIMICS pools over timesteps
   ss[["Nmin"]] <- 0
+  ss[["Cover"]] <- 0
   MIMfwd = t(as.data.frame(ss)) 
 
   
@@ -220,27 +226,29 @@ for (z in seq(1,length(experiment))) {
     # Recalc Tpars here, calls ftn in calc_Tpars.R
     #---------------------------------------------
     # e.g. 20% increase in NPP, starting in year 1
-    exud_adj = 0.1 
+    exud_adj = exud[1] 
+
     if (i < (1*365) ) {
       ANPP_adj = ANPP 
       CN_adj = CN 
     } else {
-      ANPP_adj = ANPP * 1.1
-      CN_adj = CN * 1.1
+      ANPP_adj = ANPP * eCO2_NPP
+      CN_adj = CN * eCO2_CHEM
+      if  (z==3 || z==5)  {
+        exud_adj = exud[2]
+      }
     }
-    if  (z==3 || z==5)  {
-      exud_adj = 0.15
-    }
-
     #>> Same example site input as used for stode
     Tpars_mod = calc_Tpars(TSOI = TSOI, ANPP = ANPP_adj, CLAY = CLAY, 
-                           CN = CN_adj, LIG = LIG,x=x_adj,exud=exud_adj) 
+                           CN = CN_adj, LIG = LIG,x=x_adj,exud=exud_adj,
+                           nUPmod=nUPmod) 
     
     # Update MIMICS pools
     #---------------------------------------------
     step = CN_iter(t=NA, y=MIMfwd[i-1,], pars=Tpars_mod)
     pools_update = c(MIMfwd[i-1,1:15] + unlist(step)[1:15],
-                         Nmin = unlist(step)[16]) 
+                         Nmin = unlist(step)[16], 
+                         Cover = unlist(step)[17]) 
     MIMfwd = rbind(MIMfwd, t(as.data.frame(pools_update)))
   }     # close daily (i) loop
   
@@ -263,26 +271,43 @@ for (z in seq(1,length(experiment))) {
 } # close z loop
 
 
+
 df_out$bulkCN = rowSums(df_out[,1:7])/rowSums(df_out[,8:14])
 df_out$TotalC = rowSums(df_out[,1:7]) * MICROtoECO
+df_out$MicC = rowSums(df_out[,3:4]) * MICROtoECO
+df_out$MicCN = rowSums(df_out[,3:4])/rowSums(df_out[,10:11])
+df_out$MicC_O = df_out[,3]/df_out[,4]
 df_out$Nmin  = df_out$Nmin * MICROtoECO  
+df_out$Cover  = df_out$Cover * MICROtoECO  
 df_out$experiment<- factor(df_out$experiment, levels = experiment)
-df_out$alloc<- factor(df_out$alloc, levels = c('10%','15%'))
+df_out$alloc<- factor(df_out$alloc, levels = c('10%','20%'))
 
 
 # example pool change over simulation period
 ggplot(df_out, aes(x=year,y = bulkCN,color=tx,linetype=alloc)) + 
   geom_line()+
   scale_linetype_manual(values = c("solid", "dotdash")) +
-  xlab("Year") 
+  xlab("Year")+
+  labs(y = "Bulk C:N",
+       title = paste("eCO2_NPP =",eCO2_NPP,", eCO2_chem =",eCO2_CHEM))
+
 
 ggplot(df_out, aes(x=year,y = TotalC,color=tx,linetype=alloc)) + 
   geom_line()+
   scale_linetype_manual(values = c("solid", "dotdash")) +
-  xlab("Year") 
+  xlab("Year") +
+  labs(y = "Total C",
+     title = paste("eCO2_NPP =",eCO2_NPP,", eCO2_chem =",eCO2_CHEM))
+
+ggplot(df_out, aes(x=year,y = MicC_O,color=tx,linetype=alloc)) + 
+  geom_line()+
+  scale_linetype_manual(values = c("solid", "dotdash")) +
+  xlab("Year") +
+  labs(y = "MIC C:O",
+       title = paste("eCO2_NPP =",eCO2_NPP,", eCO2_chem =",eCO2_CHEM))
 
 df_out %>% 
-  filter(year != 0) %>%
+  filter(year >= 1) %>%
   ggplot(aes(x=year,y = Nmin,color=tx,linetype=alloc)) + 
   geom_line()+
   scale_linetype_manual(values = c("solid", "dotdash")) +
@@ -294,13 +319,37 @@ ggplot(df_out, aes(x=year,y = (SOM_1/(SOM_1+SOM_2+SOM_3)),
   ylab("MAOM fraction of total") + 
   xlab("Year") 
 
-ggplot(df_out, aes(x=year,y = (MIC_2),
+ggplot(df_out, aes(x=year,y = (SOM_2/(SOM_1+SOM_2+SOM_3)),
+                   color=experiment)) + 
+  geom_line()+
+  ylab("POM fraction of total") + 
+  xlab("Year") 
+
+
+ggplot(df_out, aes(x=year,y = (DIN),
                    color=experiment)) + 
   geom_line()+
   xlab("Year") 
 
-df_out %>% 
-  filter(year == 50) #%>%
+ggplot(df_out, aes(x=year,y = (Cover),
+                   color=experiment)) + 
+  geom_line()+
+  xlab("Year") 
+
+df_out[1,]
+nsteps = dim(df_out)[1]
+df_out[nsteps,]
+
+## Quick look at response ratios:
+x <- df_out %>% 
+  filter(year==sim_year) #%>%
+y <- df_out %>% 
+  filter(year==df_out$year[2]) #%>%
+z = x[,1:16]/y[,1:16]
+z
+z2 = x[,22:26]/y[,22:26]
+z2
+
 
 # exudate effect kg/m2/d to g/m2/y to kg/ha
 #exef_prime = 1e3*365*(4.177809e-05 - 4.168749e-05) * 1e4 *1e-3 

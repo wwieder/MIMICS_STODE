@@ -3,8 +3,6 @@
 # Default inputs to MIMICS
 CN_RXEQ <- function(t, y, pars) {
   
-  #print(pars['VMAX1'])
-  
   with (as.list(c(y, pars)),{
     
     LITmin[1] = MIC_1 * VMAX[1] * LIT_1 / (KM[1] + MIC_1)
@@ -77,9 +75,9 @@ CN_RXEQ <- function(t, y, pars) {
     upMIC_1_N  = NUE[1]*(LITminN[1] + SOMminN[1]) + NUE[2]*(LITminN[2]) + DINup[1] #!!! Emily's code only has one NUE value
   
     CNup[1]    = (upMIC_1)/(upMIC_1_N + 1e-10)
-  #   Overflow[1] = (upMIC_1) - (upMIC_1_N)*min(CN_r, CNup[1])
+    Overflow[1] = (upMIC_1) - (upMIC_1_N)*min(CN_r, CNup[1])
     Nspill[1]   = (upMIC_1_N) - (upMIC_1)/max(CN_r, CNup[1])
-  
+    
   # #! Add Overflow_r and Overflow_k to output netCDF file. Units conversion occurs in subroutine mimics_caccum. -mdh 10/12/2020
   # #mimicsflux%Overflow_r(npt) = mimicsflux%Overflow_r(npt) + Overflow_r
   
@@ -87,9 +85,9 @@ CN_RXEQ <- function(t, y, pars) {
     upMIC_2_N  = NUE[3]*(LITminN[3] + SOMminN[2]) + NUE[4]*(LITminN[4]) + DINup[2]
   
     CNup[2]    = (upMIC_2)/(upMIC_2_N+1e-10)
-  #   Overflow[2] = (upMIC_2) - (upMIC_2_N)*min(CN_K, CNup[2])
+    Overflow[2] = (upMIC_2) - (upMIC_2_N)*min(CN_K, CNup[2])
     Nspill[2]   = (upMIC_2_N) - (upMIC_2)/max(CN_K, CNup[2])
-  
+
   # #! Add Overflow_r and Overflow_k to output netCDF file. Units conversion occurs in subroutine mimics_caccum. -mdh 10/12/2020
   # #mimicsflux%Overflow_k(npt) = mimicsflux%Overflow_k(npt) + Overflow_k
   
@@ -116,14 +114,21 @@ CN_RXEQ <- function(t, y, pars) {
     LeachingLoss = Nleak*DIN
     #remove N losses 
     dDIN = dDIN-LeachingLoss 
-    
+
+    # account for overflow respiration fluxes
+    if (Overflow[1] > 1e-10) {
+      dMIC_1 = dMIC_1 - Overflow[1]    
+    }
+    if (Overflow[2] > 1e-10) {
+      dMIC_2 = dMIC_2 - Overflow[2]    
+    }
     list(c(dLIT_1, dLIT_2, dMIC_1, dMIC_2, dSOM_1, dSOM_2, dSOM_3, 
            dLIT_1_N, dLIT_2_N, dMIC_1_N, dMIC_2_N, dSOM_1_N, dSOM_2_N, dSOM_3_N, dDIN))
   })
 }
 
 
-# For timevarying output, include Nmin flux
+# For time varying output, include Nmin flux
 CN_iter <- function(t, y, pars) {
 
   with (as.list(c(y, pars)),{
@@ -198,7 +203,7 @@ CN_iter <- function(t, y, pars) {
     upMIC_1_N  = NUE[1]*(LITminN[1] + SOMminN[1]) + NUE[2]*(LITminN[2]) + DINup[1] #!!! Emily's code only has one NUE value
     
     CNup[1]    = (upMIC_1)/(upMIC_1_N + 1e-10)
-    #   Overflow[1] = (upMIC_1) - (upMIC_1_N)*min(CN_r, CNup[1])
+    Overflow[1] = (upMIC_1) - (upMIC_1_N)*min(CN_r, CNup[1])
     Nspill[1]   = (upMIC_1_N) - (upMIC_1)/max(CN_r, CNup[1])
     
     # #! Add Overflow_r and Overflow_k to output netCDF file. Units conversion occurs in subroutine mimics_caccum. -mdh 10/12/2020
@@ -208,7 +213,7 @@ CN_iter <- function(t, y, pars) {
     upMIC_2_N  = NUE[3]*(LITminN[3] + SOMminN[2]) + NUE[4]*(LITminN[4]) + DINup[2]
     
     CNup[2]    = (upMIC_2)/(upMIC_2_N+1e-10)
-    #   Overflow[2] = (upMIC_2) - (upMIC_2_N)*min(CN_K, CNup[2])
+    Overflow[2] = (upMIC_2) - (upMIC_2_N)*min(CN_K, CNup[2])
     Nspill[2]   = (upMIC_2_N) - (upMIC_2)/max(CN_K, CNup[2])
     
     # #! Add Overflow_r and Overflow_k to output netCDF file. Units conversion occurs in subroutine mimics_caccum. -mdh 10/12/2020
@@ -224,11 +229,6 @@ CN_iter <- function(t, y, pars) {
     # Now include optional root exudation input to SOMa    
     dSOM_3_N = Inputs[3]/CN_m + MICtrnN[3] + MICtrnN[6] + DEsorbN + OXIDATN - SOMminN[1] - SOMminN[2]
     
-    #!!! CHECK AGAINST TESTBED CODE, THIS IS WRONG...?
-    # dDIN = (1-NUE[1])*(LITminN[1] + SOMminN[1]) + (1-NUE[2])*(LITminN[2]) +
-    #        (1-NUE[3])*(LITminN[3] + SOMminN[2]) + (1-NUE[4])*(LITminN[4]) +
-    #        Nspill[1] + Nspill[2] - DINup[1] - DINup[2]
-    
     # This is really N mineralizaiton rate?
     Nmin = (1-NUE[1])*(LITminN[1] + LITminN[2] + SOMminN[1]) +  #Inputs from r decomp
       (1-NUE[3])*(LITminN[3] + LITminN[4] + SOMminN[2]) +  #Inputs from K decomp
@@ -238,8 +238,18 @@ CN_iter <- function(t, y, pars) {
     #remove N losses 
     dDIN = Nmin-LeachingLoss 
     
+    # account for overflow respiration fluxes
+    if (Overflow[1] > 1e-10) {
+      dMIC_1 = dMIC_1 - Overflow[1]    
+    }
+    if (Overflow[2] > 1e-10) {
+      dMIC_2 = dMIC_2 - Overflow[2]    
+    }
+    
+    Cover=Overflow[1]+Overflow[2]
+    
     list(c(dLIT_1, dLIT_2, dMIC_1, dMIC_2, dSOM_1, dSOM_2, dSOM_3, 
            dLIT_1_N, dLIT_2_N, dMIC_1_N, dMIC_2_N, dSOM_1_N, dSOM_2_N, dSOM_3_N, 
-           dDIN,Nmin))
+           dDIN,Nmin,Cover))
   })
 }
