@@ -19,7 +19,9 @@ MIMICS_LITBAG <- function(forcing_df, litBAG, dailyInput=NA, loop_dailyInput=TRU
     print(paste0("Starting ", forcing_df$SITE, " - ", litBAG[1]))
     print("-------------------------------------------------------")
   }
-  
+  # drop litterfall if proivded
+  forcing_df_ss = forcing_df %>%
+    select(ANPP, TSOI, CLAY, LIG_N, GWC, W_SCALAR) 
   # Get MIMICS steady_state output
   MIMss <- MIMICS_SS(forcing_df)
 
