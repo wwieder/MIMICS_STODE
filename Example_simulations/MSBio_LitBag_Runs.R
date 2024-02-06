@@ -41,7 +41,10 @@ lines(BART_dailyinput$AGNPP)
 2*sum(BART_dailyinput$AGNPP)
 sum(BART_dailyinput$NPP)
 sum(BART_dailyinput$LITFALL)
-plot(BART_dailyinput$W_SCALAR)
+plot(BART_dailyinput$TSOI/10)
+lines(BART_dailyinput$W_SCALAR)
+lines(BART_dailyinput$H2OSOI)
+lines(BART_dailyinput$TSOI/10)
 BART_DI <- BART_dailyinput %>% mutate(DAY=X, ANPP = AGNPP*2, CLAY = rep(MSBio2[1,4], 366), LIG_N = rep(MSBio2[1,9], 366), GWC = H2OSOI*100) %>%
   select(DAY, ANPP, TSOI, CLAY, LIG_N, GWC, W_SCALAR) 
 
@@ -148,7 +151,7 @@ BAGS_BART2 <- BAGS_BART2[,2:5]
 BAGS_out_BART_daily <- BAGS_BART2 %>% split(1:nrow(BAGS_BART2)) %>% map(~ MIMICS_LITBAG(litBAG=.,
                                                                                    forcing_df=BART_DI2_mean[1,],
                                                                                    dailyInput = BART_DI2,
-                                                                                   nspin_yrs=100,
+                                                                                   nspin_yrs=10,
                                                                                    nspin_days=0,
                                                                                    litadd_day=10,
                                                                                    verbose=T)) %>% bind_rows()
@@ -156,7 +159,7 @@ BAGS_out_BART_daily <- BAGS_BART2 %>% split(1:nrow(BAGS_BART2)) %>% map(~ MIMICS
 BAGS_out_BART_SS2 <- BAGS_BART2 %>% split(1:nrow(BAGS_BART2)) %>% map(~ MIMICS_LITBAG(litBAG=.,
                                                                                         forcing_df=BART_DI2_mean[1,],
                                                                                         #dailyInput = BART_DI2,
-                                                                                        nspin_yrs=100,
+                                                                                        nspin_yrs=10,
                                                                                         nspin_days=0,
                                                                                         litadd_day=10,
                                                                                         verbose=T)) %>% bind_rows()
