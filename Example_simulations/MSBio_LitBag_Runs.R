@@ -31,27 +31,27 @@ MSBio <- read.csv("Example_simulations/Data/Site_annual_clim.csv")
 #don't have gravimetric soil moisture, just volumetric, assuming a BD of 1g/cm3 makes them equivalent - could be bad assumption given this is BD of leaves
 MSBio2 <- MSBio %>% mutate(SITE = Site, ANPP = AGNPP_sum*2, TSOI = TSOI_mean, CLAY = PCT_CLAY_mean, lig_N = LIG_N, GWC = H2OSOI_mean*100, W_SCALAR=W_SCALAR_mean) %>%
   select(SITE, ANPP, TSOI, CLAY, LIG, C, N, CN, LIG_N, GWC, W_SCALAR) 
-#daily data - change site name and MSBio2 row to use different site daily input
-BART_dailyinput <- read.csv("C:/Users/katie/OneDrive - UCB-O365/Documents/Postdoc/CU/Macrosystems project/Site climatologies/BART_clim.csv")
+#daily data - change site name and MSBio2 row (1=BART, 8=SERC) to use different site daily input
+BART_dailyinput <- read.csv("Example_simulations/Data//BART_clim.csv")
 BART_DI <- BART_dailyinput %>% mutate(DAY=X, ANPP = AGNPP*2, CLAY = rep(MSBio2[1,4], 366), LIG_N = rep(MSBio2[1,9], 366), GWC = H2OSOI*100) %>%
   select(DAY, ANPP, TSOI, CLAY, LIG_N, GWC, W_SCALAR) 
 
-#MSBio litter bags with just variation in NEON litter (not separated by species)
+#Option 1: MSBio litter bags with just variation in NEON litter (not separated by species)
 MSBio_BAGS <- read.csv("Example_simulations/Data/NEON_MSB_LitVars.csv")
 
-# MSBio litter bags with leaf and litter chemistry combined
-MSBio_BAGS <- read.csv("NEON_MSB_LeafChem.csv")
-MSBio_BAGS <- MSBio_BAGS[,2:8]
-#rename to match input
-MSBio_BAGS2 <- MSBio_BAGS %>% mutate(Site = siteID, TYPE = taxonID, BAG_LIG = leaflig, BAG_N = leafN, BAG_CN = leafCN) %>%
-  select(Site, TYPE, BAG_LIG, BAG_N, BAG_CN)
-#add combined chem
-COMBO_BAGS <- data.frame(Site = c("BART", 'GRSM', 'HARV', 'LENO', 'MLBS', 'OSBS', 'SCBI', 'SERC', 'TALL', 'TREE', 'UNDE'),
-                         TYPE = rep("COMBO", 11),
-                         BAG_LIG = MSBio2$LIG,
-                         BAG_N = MSBio2$N,
-                         BAG_CN = MSBio2$CN)
-MSBio_BAGS3 <- rbind(MSBio_BAGS2, COMBO_BAGS)
+#Option2: MSBio litter bags with leaf and litter chemistry combined
+# MSBio_BAGS <- read.csv("NEON_MSB_LeafChem.csv")
+# MSBio_BAGS <- MSBio_BAGS[,2:8]
+# #rename to match input
+# MSBio_BAGS2 <- MSBio_BAGS %>% mutate(Site = siteID, TYPE = taxonID, BAG_LIG = leaflig, BAG_N = leafN, BAG_CN = leafCN) %>%
+#   select(Site, TYPE, BAG_LIG, BAG_N, BAG_CN)
+# #add combined chem
+# COMBO_BAGS <- data.frame(Site = c("BART", 'GRSM', 'HARV', 'LENO', 'MLBS', 'OSBS', 'SCBI', 'SERC', 'TALL', 'TREE', 'UNDE'),
+#                          TYPE = rep("COMBO", 11),
+#                          BAG_LIG = MSBio2$LIG,
+#                          BAG_N = MSBio2$N,
+#                          BAG_CN = MSBio2$CN)
+# MSBio_BAGS3 <- rbind(MSBio_BAGS2, COMBO_BAGS)
 
 
 ### changed to fMET calculation in STODE script here!! Note that the two options are only somewhat related but less negatives in STODE equation
@@ -89,29 +89,29 @@ BAGS_out_SERC_SS <- BAGS_SERC %>% split(1:nrow(BAGS_SERC)) %>% map(~ MIMICS_LITB
 
 
 #LENO and all LENO litters for 2 years
-BAGS_LENO <- filter(BAGS, Site == "LENO")
-BAGS_LENO <- BAGS_LENO[,2:5]
-MSBio_LENO_lsm <- MSBio2
-MSBio_LENO_lsm[4, 10] = 32 #from empirical data - LCI
-BAGS_out <- BAGS_LENO %>% split(1:nrow(BAGS_LENO)) %>% map(~ MIMICS_LITBAG(litBAG=.,
-                                                                           forcing_df=MSBio2[4,],
-                                                                           dailyInput = LENO_DI,
-                                                                           nspin_yrs=2,
-                                                                           nspin_days=0,
-                                                                           litadd_day=10,
-                                                                           verbose=T)) %>% bind_rows()
+# BAGS_LENO <- filter(BAGS, Site == "LENO")
+# BAGS_LENO <- BAGS_LENO[,2:5]
+# MSBio_LENO_lsm <- MSBio2
+# MSBio_LENO_lsm[4, 10] = 32 #from empirical data - LCI
+# BAGS_out <- BAGS_LENO %>% split(1:nrow(BAGS_LENO)) %>% map(~ MIMICS_LITBAG(litBAG=.,
+#                                                                            forcing_df=MSBio2[4,],
+#                                                                            dailyInput = LENO_DI,
+#                                                                            nspin_yrs=2,
+#                                                                            nspin_days=0,
+#                                                                            litadd_day=10,
+#                                                                            verbose=T)) %>% bind_rows()
 
 #UNDE and all UNDE litters (11) for 2 years
-BAGS_UNDE <- filter(BAGS, Site == "UNDE")
-BAGS_UNDE <- BAGS_UNDE[,2:5]
-BAGS_out <- BAGS_UNDE %>% split(1:nrow(BAGS_UNDE)) %>% map(~ MIMICS_LITBAG(litBAG=.,
-                                                                           forcing_df=MSBio2[11,],
-                                                                           nspin_yrs=2,
-                                                                           nspin_days=0,
-                                                                           litadd_day=10,
-                                                                           verbose=T)) %>% bind_rows()
+# BAGS_UNDE <- filter(BAGS, Site == "UNDE")
+# BAGS_UNDE <- BAGS_UNDE[,2:5]
+# BAGS_out <- BAGS_UNDE %>% split(1:nrow(BAGS_UNDE)) %>% map(~ MIMICS_LITBAG(litBAG=.,
+#                                                                            forcing_df=MSBio2[11,],
+#                                                                            nspin_yrs=2,
+#                                                                            nspin_days=0,
+#                                                                            litadd_day=10,
+#                                                                            verbose=T)) %>% bind_rows()
 
-#BART and all UNDE litters (1) for 2 years
+#BART and all BART litters (1) for 2 years
 BAGS_BART <- filter(BAGS, Site == "BART" & TYPE == "mean")
 BAGS_BART <- BAGS_BART[,2:5]
 BAGS_out_BART_SS <- BAGS_BART %>% split(1:nrow(BAGS_BART)) %>% map(~ MIMICS_LITBAG(litBAG=.,
@@ -123,29 +123,21 @@ BAGS_out_BART_SS <- BAGS_BART %>% split(1:nrow(BAGS_BART)) %>% map(~ MIMICS_LITB
                                                                            verbose=T)) %>% bind_rows()
 
 #all sites and all litters
-BAGS_mean <- filter(BAGS, TYPE == "mean")
-BAGS_input <- split(BAGS_mean, 1:nrow(BAGS_mean))
-forcing_input <- split(MSBio2, 1:nrow(MSBio2))
-BAGS_out_AllSites <- map2(forcing_input, BAGS_input, ~MIMICS_LITBAG(.x, .y, nspin_yrs=2, nspin_days=0, litadd_day=10, verbose=T)) %>% bind_rows()
+# BAGS_mean <- filter(BAGS, TYPE == "mean")
+# BAGS_input <- split(BAGS_mean, 1:nrow(BAGS_mean))
+# forcing_input <- split(MSBio2, 1:nrow(MSBio2))
+# BAGS_out_AllSites <- map2(forcing_input, BAGS_input, ~MIMICS_LITBAG(.x, .y, nspin_yrs=2, nspin_days=0, litadd_day=10, verbose=T)) %>% bind_rows()
 
 ####
-#plot output - comparing output across LQ, soil moisture, and parameters
+#plot output
 ####
 
 colorBlind7  <- c("#E69F00", "#56B4E9", "#009E73",
                   "#F0E442", "#0072B2", "#D55E00", "#CC79A7") #yellow (LENO), blue (SERC), green (UNDE)
 
-#compare to field litter mass loss
+#Formating observational data for comparing to field litter mass loss
 Field_LML <- read.csv("Example_simulations/Data/Litter_decomp_all.csv")
-#with species seperated
-LML_sum <- Field_LML %>% filter(site == 'LENO') %>% group_by(Species, time.point) %>% summarize(mean.ML = mean(percent.loss.litter),
-                                                                                                n = n(),
-                                                                                                sd = sd(percent.loss.litter),
-                                                                                                SE = sd/sqrt(n),
-                                                                                                lci.ML = mean.ML - qt(1 - ((1 - 0.95) / 2), n - 1) * SE,
-                                                                                                uci.ML = mean.ML + qt(1 - ((1 - 0.95) / 2), n - 1) * SE,
-                                                                                                doy = mean(days_elapsed))
-#without species separated
+#Add Species to group_by to get species-specific summary
 LML_sum2 <- Field_LML %>% filter(site == 'BART') %>% group_by(time.point) %>% drop_na(percent.loss.litter) %>% summarize(mean.ML = mean(percent.loss.litter/2),
                                                                                                 n = n(),
                                                                                                 sd = sd(percent.loss.litter/2),
@@ -153,59 +145,83 @@ LML_sum2 <- Field_LML %>% filter(site == 'BART') %>% group_by(time.point) %>% dr
                                                                                                 lci.ML = mean.ML - qt(1 - ((1 - 0.95) / 2), n - 1) * SE,
                                                                                                 uci.ML = mean.ML + qt(1 - ((1 - 0.95) / 2), n - 1) * SE,
                                                                                                 doy = mean(days_elapsed))
+
+###
+#moisture function testing
+###
+
 #wide format MIMICS output for plotting
-BAGS_out_wide_fWmeth0 = BAGS_out %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
-BAGS_out_wide_fWmeth1 = BAGS_out_fWm1 %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
-BAGS_out_wide_fWmeth2 = BAGS_out_fWm2 %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
-BAGS_out_wide_fWmeth3 = BAGS_out_fWm3 %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
+# BAGS_out_wide_fWmeth0 = BAGS_out %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
+# BAGS_out_wide_fWmeth1 = BAGS_out_fWm1 %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
+# BAGS_out_wide_fWmeth2 = BAGS_out_fWm2 %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
+# BAGS_out_wide_fWmeth3 = BAGS_out_fWm3 %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
+# 
+# #wide format for fW effects on just Vmax or on both Vmax and tau
+# BAGS_out_wide = BAGS_out_100y %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
+# BAGS_out_wide_fW.tau = BAGS_out_fWt %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
+# 
+# #plot MIMICS output with different soil moisture and field litter mass loss together
+# ggplot() +
+#   #geom_line(data=BAGS_out_wide_fWmeth0, aes(y=(mean/0.1)*100, x=DAY, color ="fW=1"), linewidth=2, alpha=0.5) +
+#   #geom_line(data=BAGS_out_wide_fWmeth1, aes(y=(mean/0.1)*100, x=DAY, color ="CORPSE"), linewidth=2, alpha=0.5) +
+#   #geom_line(data=BAGS_out_wide_fWmeth2, aes(y=(mean/0.1)*100, x=DAY, color ="Calibrated"), linewidth=2, alpha=0.5) +
+#   #geom_line(data=BAGS_out_wide_fWmeth3, aes(y=(mean/0.1)*100, x=DAY, color ="W_SCALAR"), linewidth=2, alpha=0.5) +
+#   geom_line(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY, color ="Default"), linewidth=2, alpha=0.5) +
+#   #geom_line(data=BAGS_out_wide_fW.tau, aes(y=(mean/0.1)*100, x=DAY, color ="Tau Effects"), linewidth=2, alpha=0.5) +
+#   #geom_ribbon(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY, ymin = (lci/0.1)*100, ymax=(uci/0.1)*100), alpha = 0.3) +
+#   #geom_point(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10), color = "#009E73", size = 3) +
+#   #geom_errorbar(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10, ymin = (1-lci.ML)*100, ymax = (1-uci.ML)*100), width=0, color = "#009E73",linewidth=1) +
+#   ylab("Litter Bag C Remaining (%)") +
+#   xlab("Day") +
+#   scale_color_manual(values = c("fW=1"="#E69F00", "CORPSE"="#56B4E9", "Calibrated"="#009E73", "W_SCALAR" = "#F0E442")) +
+#   ggtitle("NPP option for turnover") +
+#   theme_bw(base_size = 20)
+# 
+# 
+# #plot MIMICS output with different soil moisture and microbial dynamics together
+# ggplot() +
+#   geom_line(data=BAGS_out_SERC_fW0, aes(y=MICr+MICk, x=DAY, color ="fW=1"), linewidth=2, alpha=0.3) +
+#   geom_line(data=BAGS_out_SERC_fW1, aes(y=MICr+MICk, x=DAY, color ="CORPSE"), linewidth=2, alpha=0.3) +
+#   geom_line(data=BAGS_out_SERC_fW2, aes(y=MICr+MICk, x=DAY, color ="Calibrated"), linewidth=2, alpha=0.3) +
+#   geom_line(data=BAGS_out_SERC_fW3, aes(y=MICr+MICk, x=DAY, color ="W_SCALAR"), linewidth=2, alpha=0.3) +
+#   #geom_line(data=BAGS_out, aes(y=MICr+MICk, x=DAY, color ="Default"), linewidth=2, alpha=0.5) +
+#   #geom_line(data=BAGS_out_fWt, aes(y=MICr+MICk, x=DAY, color ="Tau Effects"), linewidth=2, alpha=0.5) +
+#   ylab("microbial biomass") +
+#   xlab("Day") +
+#   #ylim(0,2) +
+#   xlim(0,3650)+
+#   scale_color_manual(values = c("fW=1"="#E69F00", "CORPSE"="#56B4E9", "Calibrated"="#009E73", "W_SCALAR" = "#F0E442")) +
+#   ggtitle("beta option for turnover - SERC") +
+#   theme_bw(base_size = 20)
+# 
+# #Mic biomass vs soil moisture
+# BO_fWm0 <- BAGS_out_fWm0 %>% filter(DAY<366) %>% filter(Litter_Type=="mean") %>% left_join(SERC_DI, by="DAY")
+# BO_fWm1 <- BAGS_out_fWm1 %>% filter(DAY<366) %>% filter(Litter_Type=="mean") %>% left_join(SERC_DI, by="DAY")
+# BO_fWm2 <- BAGS_out_fWm2 %>% filter(DAY<366) %>% filter(Litter_Type=="mean") %>% left_join(SERC_DI, by="DAY")
+# BO_fWm3 <- BAGS_out_fWm3 %>% filter(DAY<366) %>% filter(Litter_Type=="mean") %>% left_join(SERC_DI, by="DAY")
+# ggplot() +
+#   geom_line(data=BO_fWm0, aes(y=MICr+MICk, x=GWC, color = "fW=1"), linewidth=2, alpha=0.5) +
+#   geom_line(data=BO_fWm1, aes(y=MICr+MICk, x=GWC, color = "CORPSE"), linewidth=2, alpha=0.5) +
+#   geom_line(data=BO_fWm2, aes(y=MICr+MICk, x=GWC, color = "Calibrated"), linewidth=2, alpha=0.5)+
+#   geom_line(data=BO_fWm3, aes(y=MICr+MICk, x=GWC, color = "W_SCALAR"), linewidth=2, alpha=0.5)+
+#   ylim(0,0.7) +
+#   ylab("Microbial biomass") +
+#   xlab("GWC") +
+#   scale_linetype_manual(values = c("fW=1"="E69F00", "CORPSE"="#56B4E9", "Calibrated"="#009E73", "W_SCALAR" = "#F0E442"))
 
-#wide format for fW effects on just Vmax or on both Vmax and tau
-BAGS_out_wide = BAGS_out_100y %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
-BAGS_out_wide_fW.tau = BAGS_out_fWt %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
 
-#plot MIMICS output with different soil moisture and field litter mass loss together
-ggplot() +
-  #geom_line(data=BAGS_out_wide_fWmeth0, aes(y=(mean/0.1)*100, x=DAY, color ="fW=1"), linewidth=2, alpha=0.5) +
-  #geom_line(data=BAGS_out_wide_fWmeth1, aes(y=(mean/0.1)*100, x=DAY, color ="CORPSE"), linewidth=2, alpha=0.5) +
-  #geom_line(data=BAGS_out_wide_fWmeth2, aes(y=(mean/0.1)*100, x=DAY, color ="Calibrated"), linewidth=2, alpha=0.5) +
-  #geom_line(data=BAGS_out_wide_fWmeth3, aes(y=(mean/0.1)*100, x=DAY, color ="W_SCALAR"), linewidth=2, alpha=0.5) +
-  geom_line(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY, color ="Default"), linewidth=2, alpha=0.5) +
-  #geom_line(data=BAGS_out_wide_fW.tau, aes(y=(mean/0.1)*100, x=DAY, color ="Tau Effects"), linewidth=2, alpha=0.5) +
-  #geom_ribbon(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY, ymin = (lci/0.1)*100, ymax=(uci/0.1)*100), alpha = 0.3) +
-  #geom_point(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10), color = "#009E73", size = 3) +
-  #geom_errorbar(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10, ymin = (1-lci.ML)*100, ymax = (1-uci.ML)*100), width=0, color = "#009E73",linewidth=1) +
-  ylab("Litter Bag C Remaining (%)") +
-  xlab("Day") +
-  scale_color_manual(values = c("fW=1"="#E69F00", "CORPSE"="#56B4E9", "Calibrated"="#009E73", "W_SCALAR" = "#F0E442")) +
-  ggtitle("NPP option for turnover") +
-  theme_bw(base_size = 20)
+###
+#Daily vs. STODE
+####
 
-
-#plot MIMICS output with different soil moisture and microbial dynamics
-ggplot() +
-  geom_line(data=BAGS_out_SERC_fW0, aes(y=MICr+MICk, x=DAY, color ="fW=1"), linewidth=2, alpha=0.3) +
-  geom_line(data=BAGS_out_SERC_fW1, aes(y=MICr+MICk, x=DAY, color ="CORPSE"), linewidth=2, alpha=0.3) +
-  geom_line(data=BAGS_out_SERC_fW2, aes(y=MICr+MICk, x=DAY, color ="Calibrated"), linewidth=2, alpha=0.3) +
-  geom_line(data=BAGS_out_SERC_fW3, aes(y=MICr+MICk, x=DAY, color ="W_SCALAR"), linewidth=2, alpha=0.3) +
-  #geom_line(data=BAGS_out, aes(y=MICr+MICk, x=DAY, color ="Default"), linewidth=2, alpha=0.5) +
-  #geom_line(data=BAGS_out_fWt, aes(y=MICr+MICk, x=DAY, color ="Tau Effects"), linewidth=2, alpha=0.5) +
-  ylab("microbial biomass") +
-  xlab("Day") +
-  #ylim(0,2) +
-  xlim(0,3650)+
-  scale_color_manual(values = c("fW=1"="#E69F00", "CORPSE"="#56B4E9", "Calibrated"="#009E73", "W_SCALAR" = "#F0E442")) +
-  ggtitle("beta option for turnover - SERC") +
-  theme_bw(base_size = 20)
-
-#Why big jump in year 1? Need to check non-CORPSE water functions
-SERC_daily <- rbind(SERC_DI, SERC_DI)
-SERC_daily$DAY <- 1:732
-BAGS_daily <- inner_join(BAGS_out_SERC_lowANPP, SERC_daily, by='DAY')
-BAGS_out_4y <- filter(BAGS_out_BART, DAY <1461)
-BAGS_BART_sum <- BAGS_out_BART %>% mutate(YEAR = c(rep(1, 365), rep(2, 365), rep(3, 365), rep(4, 365), rep(5, 365))) %>% group_by(YEAR) %>%
-  summarise(daily_mean_mic = mean(MICr+MICk), daily_mean_lit = mean(LITm+LITs), daily_mean_som = mean(SOMa+SOMc+SOMp))
-BAGS_out_BART <- BAGS_out_BART %>% mutate(YEAR = c(rep(1, 365), rep(2, 365), rep(3, 365), rep(4, 365), rep(5, 365))) %>%
-  inner_join(BAGS_BART_sum)
+# SERC_daily <- rbind(SERC_DI, SERC_DI)
+# SERC_daily$DAY <- 1:732
+# BAGS_daily <- inner_join(BAGS_out_SERC_lowANPP, SERC_daily, by='DAY')
+# BAGS_out_4y <- filter(BAGS_out_BART, DAY <1461)
+# BAGS_BART_sum <- BAGS_out_BART %>% mutate(YEAR = c(rep(1, 365), rep(2, 365), rep(3, 365), rep(4, 365), rep(5, 365))) %>% group_by(YEAR) %>%
+#   summarise(daily_mean_mic = mean(MICr+MICk), daily_mean_lit = mean(LITm+LITs), daily_mean_som = mean(SOMa+SOMc+SOMp))
+# BAGS_out_BART <- BAGS_out_BART %>% mutate(YEAR = c(rep(1, 365), rep(2, 365), rep(3, 365), rep(4, 365), rep(5, 365))) %>%
+#   inner_join(BAGS_BART_sum)
 ggplot() +
   geom_line(data=BAGS_out_BART, aes(y=MICr+MICk, x=DAY, color = "MIC", linetype ="daily"), linewidth=2, alpha=0.5) +
   geom_line(data=BAGS_out_BART, aes(y=LITm+LITs, x=DAY, color = "Litter", linetype ="daily"), linewidth=2, alpha=0.5) +
@@ -226,81 +242,69 @@ ggplot() +
   ggtitle("W_SCALAR moisture at BART") +
   theme_bw(base_size = 20)
 
-#Mic biomass vs soil moisture
-BO_fWm0 <- BAGS_out_fWm0 %>% filter(DAY<366) %>% filter(Litter_Type=="mean") %>% left_join(SERC_DI, by="DAY")
-BO_fWm1 <- BAGS_out_fWm1 %>% filter(DAY<366) %>% filter(Litter_Type=="mean") %>% left_join(SERC_DI, by="DAY")
-BO_fWm2 <- BAGS_out_fWm2 %>% filter(DAY<366) %>% filter(Litter_Type=="mean") %>% left_join(SERC_DI, by="DAY")
-BO_fWm3 <- BAGS_out_fWm3 %>% filter(DAY<366) %>% filter(Litter_Type=="mean") %>% left_join(SERC_DI, by="DAY")
-ggplot() +
-  geom_line(data=BO_fWm0, aes(y=MICr+MICk, x=GWC, color = "fW=1"), linewidth=2, alpha=0.5) +
-  geom_line(data=BO_fWm1, aes(y=MICr+MICk, x=GWC, color = "CORPSE"), linewidth=2, alpha=0.5) +
-  geom_line(data=BO_fWm2, aes(y=MICr+MICk, x=GWC, color = "Calibrated"), linewidth=2, alpha=0.5)+
-  geom_line(data=BO_fWm3, aes(y=MICr+MICk, x=GWC, color = "W_SCALAR"), linewidth=2, alpha=0.5)+
-  ylim(0,0.7) +
-  ylab("Microbial biomass") +
-  xlab("GWC") +
-  scale_linetype_manual(values = c("fW=1"="E69F00", "CORPSE"="#56B4E9", "Calibrated"="#009E73", "W_SCALAR" = "#F0E442"))
-  
-#can varying LQ get the same variability as at the sites?
-ggplot() +
-  geom_line(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY), linewidth=1, alpha=0.5, color = "#E69F00", linetype =1) +
-  geom_ribbon(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY, ymin = (lci/0.1)*100, ymax=(uci/0.1)*100), alpha = 0.3) +
-  geom_point(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10), color = "#E69F00", size = 3) +
-  geom_errorbar(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10, ymin = (1-lci.ML)*100, ymax = (1-uci.ML)*100), width=0, color = "#E69F00",linewidth=1) +
-  ylab("Litter Bag C Remaining (%)") +
-  xlab("Day") +
-  labs(linetype="Parameter Set") +
-  ggtitle("LQ induced variablity - LENO") +
-  theme_bw(base_size = 20)
+###
+#within site testing
+####
 
-#can varying soil moisture get the same variability as at the sites?
-#previous runs were at 100% moisture - likely going to throw everything off
-#hmm actually seems like mositure is having no effect
-#wide format MIMICS output for plotting
-BAGS_out_wide = BAGS_out %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
-BAGS_out_wide_wet = BAGS_out %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
-BAGS_out_wide_dry = BAGS_out %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
-ggplot() +
-  geom_line(data=BAGS_out_wide_dry, aes(y=(mean/0.1)*100, x=DAY), linewidth=1.5, alpha=0.5, color = "#E69F00", linetype =1) +
-  #geom_line(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY), linewidth=1.5, alpha=0.5, color = "#E69F00", linetype =2) +
-  geom_line(data=BAGS_out_wide_mid, aes(y=(mean/0.1)*100, x=DAY), linewidth=1.5, alpha=0.5, color = "#E69F00", linetype =3) +
-  #geom_ribbon(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY, ymin = (lci/0.1)*100, ymax=(uci/0.1)*100), alpha = 0.3) +
-  geom_point(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10), color = "#E69F00", size = 3) +
-  geom_errorbar(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10, ymin = (1-lci.ML)*100, ymax = (1-uci.ML)*100), width=0, color = "#E69F00",linewidth=1) +
-  ylab("Litter Bag C Remaining (%)") +
-  xlab("Day") +
-  labs(linetype="Parameter Set") +
-  ggtitle("fW=0.05 (solid); fW = 0.5 (dotted)- LENO") +
-  theme_bw(base_size = 20)
+
+#can varying LQ get the same variability as at the sites?
+# ggplot() +
+#   geom_line(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY), linewidth=1, alpha=0.5, color = "#E69F00", linetype =1) +
+#   geom_ribbon(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY, ymin = (lci/0.1)*100, ymax=(uci/0.1)*100), alpha = 0.3) +
+#   geom_point(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10), color = "#E69F00", size = 3) +
+#   geom_errorbar(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10, ymin = (1-lci.ML)*100, ymax = (1-uci.ML)*100), width=0, color = "#E69F00",linewidth=1) +
+#   ylab("Litter Bag C Remaining (%)") +
+#   xlab("Day") +
+#   labs(linetype="Parameter Set") +
+#   ggtitle("LQ induced variablity - LENO") +
+#   theme_bw(base_size = 20)
+# 
+# #can varying soil moisture get the same variability as at the sites?
+# #wide format MIMICS output for plotting
+# BAGS_out_wide = BAGS_out %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
+# BAGS_out_wide_wet = BAGS_out %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
+# BAGS_out_wide_dry = BAGS_out %>% mutate(LITBAG = LITBAGm+LITBAGs) %>% select(SITE, Litter_Type, DAY, LITBAG) %>% pivot_wider(names_from = Litter_Type, values_from = LITBAG)
+# ggplot() +
+#   geom_line(data=BAGS_out_wide_dry, aes(y=(mean/0.1)*100, x=DAY), linewidth=1.5, alpha=0.5, color = "#E69F00", linetype =1) +
+#   #geom_line(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY), linewidth=1.5, alpha=0.5, color = "#E69F00", linetype =2) +
+#   geom_line(data=BAGS_out_wide_mid, aes(y=(mean/0.1)*100, x=DAY), linewidth=1.5, alpha=0.5, color = "#E69F00", linetype =3) +
+#   #geom_ribbon(data=BAGS_out_wide, aes(y=(mean/0.1)*100, x=DAY, ymin = (lci/0.1)*100, ymax=(uci/0.1)*100), alpha = 0.3) +
+#   geom_point(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10), color = "#E69F00", size = 3) +
+#   geom_errorbar(data=LML_sum2, aes(y=(1-mean.ML)*100, x=doy+10, ymin = (1-lci.ML)*100, ymax = (1-uci.ML)*100), width=0, color = "#E69F00",linewidth=1) +
+#   ylab("Litter Bag C Remaining (%)") +
+#   xlab("Day") +
+#   labs(linetype="Parameter Set") +
+#   ggtitle("fW=0.05 (solid); fW = 0.5 (dotted)- LENO") +
+#   theme_bw(base_size = 20)
 
 ####
-#plot output - comparing microbial community and output
+#plot output - comparing observed to MIMICS microbial community
 ####
 
 #empirical microbe data
-MSBio_rK <- read.csv("MSBio_rK.csv")
-SERC_rK <- MSBio_rK %>% filter(site == "SERC" & time.point == 0) %>% mutate(rK = r/K) %>% mutate(CO = Copiotroph/Oligotroph)
-
-#bringing data into one dataframe
-a <- data.frame(group = "model", value = (BAGS_out$MICr/BAGS_out$MICk))
-b <- data.frame(group = "obs_rK", value = SERC_rK$rK)
-c <- data.frame(group = "obs_CO", value = SERC_rK$CO)
-plot.data <- rbind(a,b,c)
-
-#how does r:K change over time? very little...
-ggplot() + 
-  geom_line(data = BAGS_out, aes(x=DAY, y=(MICr/MICk)))
-#comparing r:K values in empirical and in MIMICS
-ggplot(plot.data, aes(x=group, y=value, fill=group)) + geom_boxplot() +
-  xlab("Type of data") + ylab("r:K or C:O") + ggtitle("SERC Microbial Community Comparison") + 
-  theme_bw(base_size = 20) + theme(legend.position="none")
-#empirical data not directly related to LQ and related to moisture a little bit if you use r:K
-
-#rwa
-df$SITE.rn = paste(df$SITE, df$run_num, sep = "")
-LIT_init <- df %>% filter(DAY == 10) %>% mutate(LITi = LITBAG_tot) %>% select(SITE.rn, LITi) 
-boxplot(LIT_init$LITi)
-df <- df %>% left_join(LIT_init, by = "SITE.rn") 
-df_730 <- df %>% filter(DAY==730) %>% mutate(LIT_PerLoss = ((LITi - LITBAG_tot)/LITi)*100) #(sample - recovered)/sample *100
-boxplot(df_730$LIT_PerLoss) #looks reasonable
+# MSBio_rK <- read.csv("MSBio_rK.csv")
+# SERC_rK <- MSBio_rK %>% filter(site == "SERC" & time.point == 0) %>% mutate(rK = r/K) %>% mutate(CO = Copiotroph/Oligotroph)
+# 
+# #bringing data into one dataframe
+# a <- data.frame(group = "model", value = (BAGS_out$MICr/BAGS_out$MICk))
+# b <- data.frame(group = "obs_rK", value = SERC_rK$rK)
+# c <- data.frame(group = "obs_CO", value = SERC_rK$CO)
+# plot.data <- rbind(a,b,c)
+# 
+# #how does r:K change over time? very little...
+# ggplot() + 
+#   geom_line(data = BAGS_out, aes(x=DAY, y=(MICr/MICk)))
+# #comparing r:K values in empirical and in MIMICS
+# ggplot(plot.data, aes(x=group, y=value, fill=group)) + geom_boxplot() +
+#   xlab("Type of data") + ylab("r:K or C:O") + ggtitle("SERC Microbial Community Comparison") + 
+#   theme_bw(base_size = 20) + theme(legend.position="none")
+# #empirical data not directly related to LQ and related to moisture a little bit if you use r:K
+# 
+# #rwa
+# df$SITE.rn = paste(df$SITE, df$run_num, sep = "")
+# LIT_init <- df %>% filter(DAY == 10) %>% mutate(LITi = LITBAG_tot) %>% select(SITE.rn, LITi) 
+# boxplot(LIT_init$LITi)
+# df <- df %>% left_join(LIT_init, by = "SITE.rn") 
+# df_730 <- df %>% filter(DAY==730) %>% mutate(LIT_PerLoss = ((LITi - LITBAG_tot)/LITi)*100) #(sample - recovered)/sample *100
+# boxplot(df_730$LIT_PerLoss) #looks reasonable
 
