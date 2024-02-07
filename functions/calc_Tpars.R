@@ -12,7 +12,7 @@
 # -- historic is a logical for using historic MAT to modify Vslope & Vint
 
 calc_Tpars_Conly <- function(ANPP, fCLAY, TSOI, MAT=NA, CN, LIG, LIG_N=NA,
-                             theta_liq=NA, theta_frzn=NA, W_SCALAR=NA) {
+                             theta_liq=NA, theta_frzn=NA, W_SCALAR=NA, litfall=NA) {
   
   # Set lig:N value if not given
   if (is.na(LIG_N)) {
@@ -56,9 +56,13 @@ calc_Tpars_Conly <- function(ANPP, fCLAY, TSOI, MAT=NA, CN, LIG, LIG_N=NA,
   }
 
   
-  # Calc litter input rate
-  EST_LIT <- (ANPP / (365*24)) * 1e3 / 1e4
-
+  # Calc litter input rate from annual or daily flux then convert units
+  if (is.na(litfall)) {
+    EST_LIT <- (ANPP / (365*24)) * 1e3 / 1e4
+  } else {
+    EST_LIT <- (litfall / 24) * 1e3 / 1e4
+  }
+  
   # ------------ calculate time varying parameters ---------------
   Vmax     <- exp(TSOI * Vslope + Vint) * aV * fW   #<-- Moisture scalar applied
   Km       <- exp(TSOI * Kslope + Kint) * aK

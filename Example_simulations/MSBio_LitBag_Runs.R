@@ -33,8 +33,27 @@ MSBio2 <- MSBio %>% mutate(SITE = Site, ANPP = AGNPP_sum*2, TSOI = TSOI_mean, CL
   select(SITE, ANPP, TSOI, CLAY, LIG, C, N, CN, LIG_N, GWC, W_SCALAR) 
 #daily data - change site name and MSBio2 row (1=BART, 8=SERC) to use different site daily input
 BART_dailyinput <- read.csv("Example_simulations/Data//BART_clim.csv")
+
+#check sum of daily fluxes
+sum(BART_dailyinput$LITFALL)
+plot(BART_dailyinput$LITFALL)
+lines(BART_dailyinput$AGNPP)
+2*sum(BART_dailyinput$AGNPP)
+sum(BART_dailyinput$NPP)
+sum(BART_dailyinput$LITFALL)
+plot(BART_dailyinput$W_SCALAR)
 BART_DI <- BART_dailyinput %>% mutate(DAY=X, ANPP = AGNPP*2, CLAY = rep(MSBio2[1,4], 366), LIG_N = rep(MSBio2[1,9], 366), GWC = H2OSOI*100) %>%
   select(DAY, ANPP, TSOI, CLAY, LIG_N, GWC, W_SCALAR) 
+
+# two test dataframes with daily and annual results
+BART_DI2 <- BART_dailyinput %>% mutate(DAY=X, ANPP = rep(sum(LITFALL)*2,366), LITFALL=LITFALL*2, CLAY = rep(MSBio2[1,4], 366), 
+                                       LIG_N = rep(MSBio2[1,9], 366), GWC = H2OSOI*100) %>%
+  select(DAY, ANPP, LITFALL, TSOI, CLAY, LIG_N, GWC, W_SCALAR) 
+
+BART_DI2_mean <- BART_DI2  %>% mutate( SITE= "BART", ANPP = mean(ANPP), TSOI = mean(TSOI), CLAY = mean(CLAY), 
+                                       LIG_N= mean(LIG_N), GWC=mean(GWC), W_SCALAR=mean(W_SCALAR)) %>%
+  select(SITE, ANPP, TSOI, CLAY, LIG_N, GWC, W_SCALAR) 
+BART_DI2_mean = BART_DI2_mean[1,]
 
 #Option 1: MSBio litter bags with just variation in NEON litter (not separated by species)
 MSBio_BAGS <- read.csv("Example_simulations/Data/NEON_MSB_LitVars.csv")
@@ -122,6 +141,25 @@ BAGS_out_BART_SS <- BAGS_BART %>% split(1:nrow(BAGS_BART)) %>% map(~ MIMICS_LITB
                                                                            litadd_day=10,
                                                                            verbose=T)) %>% bind_rows()
 
+
+# WRW tests for new code:
+BAGS_BART2 <- filter(BAGS, Site == "BART" & TYPE == "mean")
+BAGS_BART2 <- BAGS_BART2[,2:5]
+BAGS_out_BART_daily <- BAGS_BART2 %>% split(1:nrow(BAGS_BART2)) %>% map(~ MIMICS_LITBAG(litBAG=.,
+                                                                                   forcing_df=BART_DI2_mean[1,],
+                                                                                   dailyInput = BART_DI2,
+                                                                                   nspin_yrs=100,
+                                                                                   nspin_days=0,
+                                                                                   litadd_day=10,
+                                                                                   verbose=T)) %>% bind_rows()
+
+BAGS_out_BART_SS2 <- BAGS_BART2 %>% split(1:nrow(BAGS_BART2)) %>% map(~ MIMICS_LITBAG(litBAG=.,
+                                                                                        forcing_df=BART_DI2_mean[1,],
+                                                                                        #dailyInput = BART_DI2,
+                                                                                        nspin_yrs=100,
+                                                                                        nspin_days=0,
+                                                                                        litadd_day=10,
+                                                                                        verbose=T)) %>% bind_rows()
 #all sites and all litters
 # BAGS_mean <- filter(BAGS, TYPE == "mean")
 # BAGS_input <- split(BAGS_mean, 1:nrow(BAGS_mean))
@@ -223,12 +261,12 @@ LML_sum2 <- Field_LML %>% filter(site == 'BART') %>% group_by(time.point) %>% dr
 # BAGS_out_BART <- BAGS_out_BART %>% mutate(YEAR = c(rep(1, 365), rep(2, 365), rep(3, 365), rep(4, 365), rep(5, 365))) %>%
 #   inner_join(BAGS_BART_sum)
 ggplot() +
-  geom_line(data=BAGS_out_BART, aes(y=MICr+MICk, x=DAY, color = "MIC", linetype ="daily"), linewidth=2, alpha=0.5) +
-  geom_line(data=BAGS_out_BART, aes(y=LITm+LITs, x=DAY, color = "Litter", linetype ="daily"), linewidth=2, alpha=0.5) +
-  geom_line(data=BAGS_out_BART, aes(y=SOMa+SOMc+SOMp, x=DAY, color = "SOM", linetype ="daily"), linewidth=2, alpha=0.5) +
-  geom_line(data=BAGS_out_BART_SS, aes(y=MICr+MICk, x=DAY, color = "MIC", linetype ="steady state"), linewidth=2, alpha=0.5,) +
-  geom_line(data=BAGS_out_BART_SS, aes(y=LITm+LITs, x=DAY, color = "Litter", linetype ="steady state"), linewidth=2, alpha=0.5) +
-  geom_line(data=BAGS_out_BART_SS, aes(y=SOMa+SOMc+SOMp, x=DAY, color = "SOM", linetype ="steady state"), linewidth=2, alpha=0.5) +
+  geom_line(data=BAGS_out_BART_daily, aes(y=LITm+LITs, x=DAY, color = "Litter", linetype ="daily"), linewidth=2, alpha=0.5) +
+  geom_line(data=BAGS_out_BART_daily, aes(y=MICr+MICk, x=DAY, color = "MIC", linetype ="daily"), linewidth=2, alpha=0.5) +
+  geom_line(data=BAGS_out_BART_daily, aes(y=SOMa+SOMc+SOMp, x=DAY, color = "SOM", linetype ="daily"), linewidth=2, alpha=0.5) +
+  geom_line(data=BAGS_out_BART_SS2, aes(y=MICr+MICk, x=DAY, color = "MIC", linetype ="steady state"), linewidth=2, alpha=0.5,) +
+  geom_line(data=BAGS_out_BART_SS2, aes(y=LITm+LITs, x=DAY, color = "Litter", linetype ="steady state"), linewidth=2, alpha=0.5) +
+  geom_line(data=BAGS_out_BART_SS2, aes(y=SOMa+SOMc+SOMp, x=DAY, color = "SOM", linetype ="steady state"), linewidth=2, alpha=0.5) +
   #geom_line(data=BAGS_out_BART, aes(y=daily_mean_mic, x=DAY, color = "MIC", linetype ="daily mean"), linewidth=2, alpha=0.5,) +
   #geom_line(data=BAGS_out_BART, aes(y=daily_mean_lit, x=DAY, color = "Litter", linetype ="daily mean"), linewidth=2, alpha=0.5) +
   #geom_line(data=BAGS_out_BART, aes(y=daily_mean_som, x=DAY, color = "SOM", linetype ="daily mean"), linewidth=2, alpha=0.5) +
