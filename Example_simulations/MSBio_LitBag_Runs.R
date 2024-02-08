@@ -264,3 +264,4 @@ ggplot() +
   xlab("Year") +
   ggtitle("W_SCALAR moisture, NPP at BART") +
   theme_bw(base_size = 20)
+
