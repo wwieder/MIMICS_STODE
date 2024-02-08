@@ -49,15 +49,20 @@ BART_DI <- BART_dailyinput %>% mutate(DAY=X, ANPP = AGNPP*2, CLAY = rep(MSBio2[1
   select(DAY, ANPP, TSOI, CLAY, LIG_N, GWC, W_SCALAR) 
 
 # two test dataframes with daily and annual results
-BART_DI2 <- BART_dailyinput %>% mutate(DAY=X, ANPP = rep(sum(LITFALL)*2,366), LITFALL=LITFALL*2, CLAY = rep(MSBio2[1,4], 366), 
+BART_DI2 <- BART_dailyinput %>% mutate(SITE= rep("BART", 366),DAY=X, ANPP = rep(sum(LITFALL)*2,366), LITFALL=LITFALL*2, CLAY = rep(MSBio2[1,4], 366), 
                                        LIG_N = rep(MSBio2[1,9], 366), GWC = H2OSOI*100) %>%
-  select(DAY, ANPP, LITFALL, TSOI, CLAY, LIG_N, GWC, W_SCALAR) 
+  select(SITE, DAY, ANPP, LITFALL, TSOI, CLAY, LIG_N, GWC, W_SCALAR) 
 
 BART_DI2_mean <- BART_DI2  %>% mutate( SITE= "BART", ANPP = mean(ANPP), TSOI = mean(TSOI), CLAY = mean(CLAY), 
                                        LIG_N= mean(LIG_N), GWC=mean(GWC), W_SCALAR=mean(W_SCALAR)) %>%
   select(SITE, ANPP, TSOI, CLAY, LIG_N, GWC, W_SCALAR) 
 BART_DI2_mean = BART_DI2_mean[1,]
 
+vmax_DI1 = exp(BART_DI2$TSOI * 0.063 + 5.47) * 0.000008 * BART_DI2$W_SCALAR *10
+plot(vmax_DI1)
+abline(h=mean(vmax_DI1),lt=2)
+vmax_mean = exp(BART_DI2_mean$TSOI * 0.063 + 5.47) * 0.000008 * BART_DI2_mean$W_SCALAR *10
+abline(h=vmax_mean,lw=2)
 #Option 1: MSBio litter bags with just variation in NEON litter (not separated by species)
 MSBio_BAGS <- read.csv("Example_simulations/Data/NEON_MSB_LitVars.csv")
 
@@ -143,7 +148,24 @@ BAGS_out_BART_SS <- BAGS_BART %>% split(1:nrow(BAGS_BART)) %>% map(~ MIMICS_LITB
                                                                            nspin_days=0,
                                                                            litadd_day=10,
                                                                            verbose=T)) %>% bind_rows()
+ss_testM = MIMICS_SS(BART_DI2_mean[1,])
+ss_testM[[2]]$VMAX
+ss_testM[[2]]$KM
+ss_testM[[2]]$I
 
+ss_test = MIMICS_SS(BART_DI2)
+ss_test[[2]]$VMAX
+ss_test[[2]]$KM
+ss_test[[2]]$I
+
+ss_testM[[1]] - ss_test[[1]]
+BAGS_out_BART_day1 <- BAGS_BART %>% split(1:nrow(BAGS_BART)) %>% map(~ MIMICS_LITBAG(litBAG=.,
+                                                                                   forcing_df=BART_DI2,
+                                                                                   dailyInput = BART_DI2,
+                                                                                   nspin_yrs=5,
+                                                                                   nspin_days=0,
+                                                                                   litadd_day=10,
+                                                                                   verbose=T)) %>% bind_rows()
 
 # WRW tests for new code:
 BAGS_BART2 <- filter(BAGS, Site == "BART" & TYPE == "mean")
@@ -254,6 +276,19 @@ LML_sum2 <- Field_LML %>% filter(site == 'BART') %>% group_by(time.point) %>% dr
 ###
 #Daily vs. STODE
 ####
+ggplot() +
+  geom_line(data=BAGS_out_BART_day1, aes(y=LITm+LITs, x=DAY/365, color = "Litter", linetype ="daily"), linewidth=1, alpha=0.5) +
+  geom_line(data=BAGS_out_BART_day1, aes(y=MICr+MICk, x=DAY/365, color = "MIC", linetype ="daily"), linewidth=1, alpha=0.5) +
+  geom_line(data=BAGS_out_BART_day1, aes(y=SOMa+SOMc+SOMp, x=DAY/365, color = "SOM", linetype ="daily"), linewidth=1, alpha=0.5) +
+  geom_line(data=BAGS_out_BART_SS2, aes(y=MICr+MICk, x=DAY/365, color = "MIC", linetype ="steady state"), linewidth=2, alpha=0.5,) +
+  geom_line(data=BAGS_out_BART_SS2, aes(y=LITm+LITs, x=DAY/365, color = "Litter", linetype ="steady state"), linewidth=2, alpha=0.5) +
+  geom_line(data=BAGS_out_BART_SS2, aes(y=SOMa+SOMc+SOMp, x=DAY/365, color = "SOM", linetype ="steady state"), linewidth=2, alpha=0.5) +
+  scale_color_manual(values = c("MIC"="#E69F00", "Litter"="#56B4E9", "SOM"="#009E73", "W_SCALAR" = "#F0E442", "ANPP" = "#CC79A7")) +
+  scale_linetype_manual(values = c("daily"=1, "steady state"=2, "daily mean"=3)) + 
+  ylab("C pools") +
+  xlab("Year") +
+  ggtitle("W_SCALAR moisture, beta at BART") +
+  theme_bw(base_size = 20)
 
 # SERC_daily <- rbind(SERC_DI, SERC_DI)
 # SERC_daily$DAY <- 1:732
@@ -280,7 +315,7 @@ ggplot() +
   scale_linetype_manual(values = c("daily"=1, "steady state"=2, "daily mean"=3)) + 
   ylab("C pools") +
   xlab("Year") +
-  ggtitle("W_SCALAR moisture at BART") +
+  ggtitle("W_SCALAR moisture, NPP at BART") +
   theme_bw(base_size = 20)
 
 
@@ -293,17 +328,12 @@ ggplot() +
   geom_line(data=BAGS_out_BART_SS2, aes(y=LITs, x=DAY/365, color = "LITs", linetype ="daily"), linewidth=2, alpha=0.9) +
   geom_line(data=BAGS_out_BART_SS2, aes(y=MICr, x=DAY/365, color = "MICr", linetype ="daily"), linewidth=2, alpha=0.9) +
   geom_line(data=BAGS_out_BART_SS2, aes(y=MICk, x=DAY/365, color = "MICk", linetype ="daily"), linewidth=2, alpha=0.9) +
-  
-  #  geom_line(data=BAGS_out_BART_daily, aes(y=SOMa+SOMc+SOMp, x=DAY, color = "SOM", linetype ="daily"), linewidth=2, alpha=0.5) +
-  #  geom_line(data=BAGS_out_BART_SS2, aes(y=MICr+MICk, x=DAY, color = "MIC", linetype ="steady state"), linewidth=2, alpha=0.5,) +
-  #  geom_line(data=BAGS_out_BART_SS2, aes(y=LITm+LITs, x=DAY, color = "Litter", linetype ="steady state"), linewidth=2, alpha=0.5) +
-  #  geom_line(data=BAGS_out_BART_SS2, aes(y=SOMa+SOMc+SOMp, x=DAY, color = "SOM", linetype ="steady state"), linewidth=2, alpha=0.5) +
   scale_y_log10() +
   scale_color_manual(values = c("MICr"="#E69F00", "MICk"="#56B4E9", "LITm"="#009E73", "LITs" = "#F0E442", "ANPP" = "#CC79A7")) +
   scale_linetype_manual(values = c("daily"=1, "steady state"=2, "daily mean"=3)) + 
   ylab("C pools") +
   xlab("year") +
-  ggtitle("NPP tau at BART") +
+  ggtitle("W_SCALAR moisture, NPP at BART") +
   theme_bw(base_size = 20)
 
 ggplot() +
@@ -313,17 +343,11 @@ ggplot() +
   geom_line(data=BAGS_out_BART_SS2, aes(y=SOMa, x=DAY/365, color = "SOMa", linetype ="daily"), linewidth=2, alpha=0.9) +
   geom_line(data=BAGS_out_BART_SS2, aes(y=SOMc, x=DAY/365, color = "SOMc", linetype ="daily"), linewidth=2, alpha=0.9) +
   geom_line(data=BAGS_out_BART_SS2, aes(y=SOMp, x=DAY/365, color = "SOMp", linetype ="daily"), linewidth=2, alpha=0.9) +
-
-  #  geom_line(data=BAGS_out_BART_daily, aes(y=SOMa+SOMc+SOMp, x=DAY, color = "SOM", linetype ="daily"), linewidth=2, alpha=0.5) +
-  #  geom_line(data=BAGS_out_BART_SS2, aes(y=MICr+MICk, x=DAY, color = "MIC", linetype ="steady state"), linewidth=2, alpha=0.5,) +
-  #  geom_line(data=BAGS_out_BART_SS2, aes(y=LITm+LITs, x=DAY, color = "Litter", linetype ="steady state"), linewidth=2, alpha=0.5) +
-  #  geom_line(data=BAGS_out_BART_SS2, aes(y=SOMa+SOMc+SOMp, x=DAY, color = "SOM", linetype ="steady state"), linewidth=2, alpha=0.5) +
-  #scale_y_log10() +
   scale_color_manual(values = c("SOMa"="#E69F00", "SOMc"="#56B4E9", "SOMp"="#009E73", "LITs" = "#F0E442", "ANPP" = "#CC79A7")) +
   scale_linetype_manual(values = c("daily"=1, "steady state"=2, "daily mean"=3)) + 
   ylab("C pools") +
   xlab("Year") +
-  ggtitle("W_SCALAR moisture at BART") +
+  ggtitle("W_SCALAR moisture, NPP at BART") +
   theme_bw(base_size = 20)
 
 ###
