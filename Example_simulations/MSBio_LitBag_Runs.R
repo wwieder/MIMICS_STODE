@@ -1,4 +1,5 @@
 #using Derek's litterbag code to run MSBio litter decomp simulations
+rm(list = ls())
 
 library(ggplot2)
 library(tidyr)
