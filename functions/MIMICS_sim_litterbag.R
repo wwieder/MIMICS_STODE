@@ -141,7 +141,7 @@ MIMICS_LITBAG <- function(forcing_df, litBAG, dailyInput=NA, loop_dailyInput=TRU
   LITBAG_out <- LITBAG_out * depth * 1e4 / 1e6 # Soil depth and unit conversion 
   LITBAG_out <- as.data.frame(t(LITBAG_out))
   colnames(LITBAG_out) <- c("LITBAGm", "LITBAGs", "LITm", "LITs", "MICr", "MICk", "SOMp", "SOMc", "SOMa")
-  LITBAG_out <- cbind(data.frame(SITE = forcing_df$SITE,
+  LITBAG_out <- cbind(data.frame(SITE = forcing_df$SITE[1],
                                  Litter_Type = as.character(litBAG[1]),
                                  DAY=seq(1:nrow(LITBAG_out))), LITBAG_out)
   
