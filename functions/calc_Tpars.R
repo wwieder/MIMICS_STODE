@@ -12,7 +12,7 @@
 # -- historic is a logical for using historic MAT to modify Vslope & Vint
 
 calc_Tpars_Conly <- function(ANPP, fCLAY, TSOI, MAT=NA, CN, LIG, LIG_N=NA,
-                             theta_liq=NA, theta_frzn=NA, W_SCALAR=NA, litfall=NA) {
+                             theta_liq=NA, theta_frzn=NA, W_SCALAR=NA, LITFALL=NA) {
   
   # Set moisture control on kinetics (fW)
   if (fWmethod==0) {
@@ -69,10 +69,10 @@ calc_Tpars_Conly <- function(ANPP, fCLAY, TSOI, MAT=NA, CN, LIG, LIG_N=NA,
 
   
   # Calc litter input rate from annual or daily flux then convert units
-  if (is.na(litfall)) {
+  if (is.na(LITFALL)) {
     EST_LIT <- (ANPP / (365*24)) * 1e3 / 1e4
   } else {
-    EST_LIT <- (litfall / 24) * 1e3 / 1e4
+    EST_LIT <- (LITFALL / 24) * 1e3 / 1e4
   }
   
   if (tauMethod == 'NPP') {
@@ -116,7 +116,7 @@ calc_Tpars_Conly <- function(ANPP, fCLAY, TSOI, MAT=NA, CN, LIG, LIG_N=NA,
   I[1]    <- (EST_LIT / depth) * fMET     
   I[2]    <- (EST_LIT / depth) * (1-fMET)
   Inputs  <- I
-  
+
   LITmin  <- rep(NA, dim=4)
   MICtrn  <- c(NA,NA,NA,NA,NA,NA)
   SOMmin  <- rep(NA, dim=2)
