@@ -47,9 +47,9 @@ calc_Tpars_Conly <- function(ANPP, fCLAY, TSOI, MAT=NA, CN, LIG, LIG_N=NA,
   
   if (length(Vmax)>1) {
     Vmax = mean(Vmax)
-    Km = mean(Vmax)
+    Km = mean(Km)
     LIG_N = LIG_N[1]
-    litfall = sum(litfall)
+    LITFALL = mean(LITFALL)
     ANPP = ANPP[1]
     fCLAY = fCLAY[1]
   }
