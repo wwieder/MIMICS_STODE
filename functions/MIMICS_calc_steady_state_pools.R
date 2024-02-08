@@ -98,7 +98,7 @@ MIMICS_SS <- function(df){
   MIMout <- list()
   MIMout[[1]] <- as.numeric(test[[1]]) * depth *1e4 / 1e6   # MIMICS steady state C pools
   MIMout[[2]] <- Tpars                                      # MIMICS parameters used for/from simulation
-  MIMout[[3]] <- df                                         # Forcing dataframe
+  MIMout[[3]] <- df[1,]                                         # Forcing dataframe
   MIMout[[4]] <- as.numeric(test[[2]]) * depth *1e4 / 1e6   # CO2-r & CO2-k pools 
   
   return(MIMout)
